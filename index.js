@@ -1,9 +1,12 @@
 import express from 'express';
-import router from './routes/index.js';
+import productRouter from './routes/product.js';
+
+import shopRouter from './routes/shop.js';
 import { createTables } from './db/querys.js';
 import bodyParser from 'body-parser';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import 'dotenv/config';
+import stockRouter from './routes/stock.js';
 
 // Create proxy for test and CORS issues
 const apiProxy = createProxyMiddleware({
@@ -21,7 +24,9 @@ app.use(bodyParser.json());
 
 app.set('view engine', 'ejs');
 
-app.use('/api', router);
+app.use('/api', productRouter);
+app.use('/api', stockRouter);
+app.use('/api', shopRouter);
 app.use('/api', apiProxy);
 
 const port = 3000;
