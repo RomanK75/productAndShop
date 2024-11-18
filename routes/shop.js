@@ -2,21 +2,20 @@ import express from 'express';
 const shopRouter = express.Router();
 import * as q from '../db/querys.js';
 
-
 shopRouter.post('/shop', async (req, res) => {
   try {
-    const { name } = req.body
-    console.log(name)
+    const { name } = req.body;
+    console.log(name);
     if (!name) {
-      console.log('Name is required')
-      return res.status(400).json({ error: 'Name is required' })
+      console.log('Name is required');
+      return res.status(400).json({ error: 'Name is required' });
     }
-    const result = await q.createStore(name)
-    res.json(result)
+    const result = await q.createStore(name);
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ error: error.message })
+    res.status(500).json({ error: error.message });
   }
-})
+});
 shopRouter.get('/shop', async (req, res) => {
   const { id, name } = req.query;
   // If both filters are empty, return all products
@@ -32,15 +31,11 @@ shopRouter.get('/shop', async (req, res) => {
 
   const result = await q.getShop(filters);
   res.json(result);
-
 });
 shopRouter.delete('/shop/:id', async (req, res) => {
   const { id } = req.params;
   const result = await q.deleteShop(id);
   res.json(result);
 });
-
-
-
 
 export default shopRouter;

@@ -18,22 +18,21 @@ productRouter.get('/product', async (req, res) => {
 
   const result = await q.getProduct(filters);
   res.json(result);
-
 });
 productRouter.post('/product', async (req, res) => {
   try {
-    const { name } = req.body
-    console.log(name)
+    const { name } = req.body;
+    console.log(name);
     if (!name) {
-      console.log('Name is required')
-      return res.status(400).json({ error: 'Name is required' })
+      console.log('Name is required');
+      return res.status(400).json({ error: 'Name is required' });
     }
-    const result = await q.createProduct(name)
-    res.json(result)
+    const result = await q.createProduct(name);
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ error: error.message })
+    res.status(500).json({ error: error.message });
   }
-})
+});
 productRouter.delete('/product/:plu', async (req, res) => {
   // delete product
   const plu = parseInt(req.params.plu);

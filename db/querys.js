@@ -1,4 +1,5 @@
 import * as db from './index.js';
+import 'dotenv/config';
 
 //  Create tables
 function createTables() {
@@ -24,9 +25,25 @@ function createTables() {
   `);
 }
 
+// History service notification
+async function notifyHistoryService(action) {
+  try {
+    await fetch(String(process.env.HISTORY_URL), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(action),
+    });
+    console.log(` Current url: ${process.env.HISTORY_URL}`);
+  } catch (error) {
+    console.error('Failed to notify history service:', error);
+  }
+}
+
 // Product querys
 async function createProduct(name) {
-  console.log('Creating product')
+  console.log('Creating product');
   try {
     if (typeof name !== 'string') {
       return {
@@ -51,11 +68,14 @@ async function createProduct(name) {
         error: 'Product already exists',
       };
     }
+    await notifyHistoryService({
+      action: `create product ${name} ${result.rows[0].plu}`,
+      plu: result.rows[0].plu,
+    });
     return result.rows[0];
   } catch (error) {
     console.log(error);
   }
-
 }
 async function deleteProduct(plu) {
   try {
@@ -66,6 +86,10 @@ async function deleteProduct(plu) {
     `;
     const values = [plu];
     const result = await db.query(query, values);
+    await notifyHistoryService({
+      action: `delete product ${result.rows[0].name} ${result.rows[0].plu}`,
+      plu: result.rows[0].plu,
+    });
     return { data: result.rows[0] };
   } catch (error) {
     return { error: error.message };
@@ -96,7 +120,7 @@ async function getProduct(filters = {}) {
   }
 }
 async function updateProduct(plu, newName) {
-  console.log('Updating product')
+  console.log('Updating product');
   try {
     if (typeof newName !== 'string' || newName.trim() === '') {
       return { error: 'Valid name is required' };
@@ -110,6 +134,10 @@ async function updateProduct(plu, newName) {
     `;
     const values = [newName, plu];
     const result = await db.query(query, values);
+    await notifyHistoryService({
+      action: `update product ${result.rows[0].name} ${result.rows[0].plu}`,
+      plu: result.rows[0].plu,
+    });
     return { data: result.rows[0] };
   } catch (error) {
     return { error: error.message };
@@ -133,7 +161,7 @@ async function getStockWithFilters(filters = {}) {
       JOIN stores st ON s.store_id = st.id
       WHERE 1=1
     `;
-    
+
     const values = [];
     let paramCount = 1;
 
@@ -179,31 +207,12 @@ async function getStockWithFilters(filters = {}) {
     return { error: error.message };
   }
 }
-async function updateStock(id, newQuantity, newOrderQuantity) {
-  try {
-    if (typeof newQuantity !== 'number' || typeof newOrderQuantity !== 'number') {
-      return { error: 'Valid quantity is required' };
-    }
-    const query = `
-    UPDATE stock
-    SET quantity = $1, order_quantity = $2
-    WHERE id = $3
-    RETURNING id, product_id, store_id, quantity, order_quantity;
-    `;
-    const values = [newQuantity, newOrderQuantity, id];
-    const result = await db.query(query, values);
-    return { data: result.rows[0] };
-  }
-    catch (error) {
-    return { error: error.message };
-  }
-}
 
 // Store querys
 async function createStore(name) {
   try {
     if (typeof name !== 'string') {
-      return { error : 'Name must be a string' };
+      return { error: 'Name must be a string' };
     }
     if (name.trim() === '') {
       return { error: 'Name cannot be empty' };
@@ -221,9 +230,12 @@ async function createStore(name) {
     if (result.rowCount === 0) {
       return { error: 'Store already exists' };
     }
+    await notifyHistoryService({
+      action: `create store ${result.rows[0].name} ${result.rows[0].id}`,
+      shop_id: result.rows[0].id,
+    });
     return result.rows[0];
-  }
-  catch (error) {
+  } catch (error) {
     return { error: error.message };
   }
 }
@@ -260,14 +272,15 @@ async function deleteShop(id) {
     `;
     const values = [id];
     const result = await db.query(query, values);
+    await notifyHistoryService({
+      action: `delete store ${result.rows[0].name} ${result.rows[0].id}`,
+      shop_id: result.rows[0].id,
+    });
     return { data: result.rows[0] };
   } catch (error) {
     return { error: error.message };
   }
 }
-
-
-
 
 export {
   createTables,
@@ -276,8 +289,8 @@ export {
   getProduct,
   updateProduct,
   getStockWithFilters,
-  updateStock,
   createStore,
   getShop,
   deleteShop,
+  notifyHistoryService,
 };
