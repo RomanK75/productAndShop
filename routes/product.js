@@ -22,9 +22,7 @@ productRouter.get('/product', async (req, res) => {
 productRouter.post('/product', async (req, res) => {
   try {
     const { name } = req.body;
-    console.log(name);
     if (!name) {
-      console.log('Name is required');
       return res.status(400).json({ error: 'Name is required' });
     }
     const result = await q.createProduct(name);

@@ -35,15 +35,13 @@ async function notifyHistoryService(action) {
       },
       body: JSON.stringify(action),
     });
-    console.log(` Current url: ${process.env.HISTORY_URL}`);
   } catch (error) {
-    console.error('Failed to notify history service:', error);
+    console.error('Error notifying history service:', error);
   }
 }
 
 // Product querys
 async function createProduct(name) {
-  console.log('Creating product');
   try {
     if (typeof name !== 'string') {
       return {
@@ -120,7 +118,6 @@ async function getProduct(filters = {}) {
   }
 }
 async function updateProduct(plu, newName) {
-  console.log('Updating product');
   try {
     if (typeof newName !== 'string' || newName.trim() === '') {
       return { error: 'Valid name is required' };
