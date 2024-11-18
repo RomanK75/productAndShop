@@ -117,30 +117,65 @@ async function updateProduct(plu, newName) {
 }
 
 // Stock querys
-async function getStock(filters = {}) {
+async function getStockWithFilters(filters = {}) {
   try {
-    let query = `SELECT s.id, p.plu, p.name, s.store_id, s.quantity, s.order_quantity FROM stock s JOIN products p ON s.product_id = p.plu WHERE 1=1`;
+    let query = `
+      SELECT 
+        s.id,
+        s.quantity,
+        s.order_quantity,
+        p.plu,
+        p.name as product_name,
+        st.id as store_id,
+        st.name as store_name
+      FROM stock s
+      JOIN products p ON s.product_id = p.plu
+      JOIN stores st ON s.store_id = st.id
+      WHERE 1=1
+    `;
+    
     const values = [];
     let paramCount = 1;
+
     if (filters.plu) {
       query += ` AND p.plu = $${paramCount}`;
       values.push(filters.plu);
       paramCount++;
     }
-    if (filters.storeId) {
-      query += ` AND s.store_id = $${paramCount}`;
-      values.push(filters.storeId);
+
+    if (filters.store_id) {
+      query += ` AND st.id = $${paramCount}`;
+      values.push(filters.store_id);
       paramCount++;
     }
-    if (filters.name) {
-      query += ` AND p.name ILIKE $${paramCount}`;
-      values.push(`%${filters.name}%`);
+
+    if (filters.quantity_from !== undefined) {
+      query += ` AND s.quantity >= $${paramCount}`;
+      values.push(filters.quantity_from);
       paramCount++;
     }
+
+    if (filters.quantity_to !== undefined) {
+      query += ` AND s.quantity <= $${paramCount}`;
+      values.push(filters.quantity_to);
+      paramCount++;
+    }
+
+    if (filters.order_quantity_from !== undefined) {
+      query += ` AND s.order_quantity >= $${paramCount}`;
+      values.push(filters.order_quantity_from);
+      paramCount++;
+    }
+
+    if (filters.order_quantity_to !== undefined) {
+      query += ` AND s.order_quantity <= $${paramCount}`;
+      values.push(filters.order_quantity_to);
+      paramCount++;
+    }
+
     const result = await db.query(query, values);
     return { data: result.rows };
-  }
-    catch (error) {
+  } catch (error) {
     return { error: error.message };
   }
 }
@@ -186,7 +221,7 @@ async function createStore(name) {
     if (result.rowCount === 0) {
       return { error: 'Store already exists' };
     }
-    return { data: result.rows[0] };
+    return result.rows[0];
   }
   catch (error) {
     return { error: error.message };
@@ -216,6 +251,20 @@ async function getShop(filters = {}) {
     return { error: error.message };
   }
 }
+async function deleteShop(id) {
+  try {
+    const query = `
+    DELETE FROM stores
+    WHERE id = $1
+    RETURNING id, name;
+    `;
+    const values = [id];
+    const result = await db.query(query, values);
+    return { data: result.rows[0] };
+  } catch (error) {
+    return { error: error.message };
+  }
+}
 
 
 
@@ -226,8 +275,9 @@ export {
   deleteProduct,
   getProduct,
   updateProduct,
-  getStock,
+  getStockWithFilters,
   updateStock,
   createStore,
   getShop,
+  deleteShop,
 };

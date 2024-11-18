@@ -6,14 +6,31 @@ import { pool } from '../db/index.js';
 
 
 stockRouter.get('/stock', async (req, res) => {
-  const result = await pool.query(`
-    SELECT s.*, p.name as product_name, st.name as store_name 
-    FROM stock s 
-    JOIN products p ON s.product_id = p.plu 
-    JOIN stores st ON s.store_id = st.id
-  `)
-  res.json(result.rows)
-})
+  try {
+    const {
+      plu,
+      store_id,
+      quantity_from,
+      quantity_to,
+      order_quantity_from,
+      order_quantity_to
+    } = req.query;
+
+    const filters = {};
+    
+    if (plu) filters.plu = parseInt(plu);
+    if (store_id) filters.store_id = parseInt(store_id);
+    if (quantity_from) filters.quantity_from = parseInt(quantity_from);
+    if (quantity_to) filters.quantity_to = parseInt(quantity_to);
+    if (order_quantity_from) filters.order_quantity_from = parseInt(order_quantity_from);
+    if (order_quantity_to) filters.order_quantity_to = parseInt(order_quantity_to);
+
+    const result = await q.getStockWithFilters(filters);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Get stock for specific shop
 stockRouter.get('/stock/:storeId', async (req, res) => {

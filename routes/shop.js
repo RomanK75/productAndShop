@@ -34,6 +34,11 @@ shopRouter.get('/shop', async (req, res) => {
   res.json(result);
 
 });
+shopRouter.delete('/shop/:id', async (req, res) => {
+  const { id } = req.params;
+  const result = await q.deleteShop(id);
+  res.json(result);
+});
 
 
 
