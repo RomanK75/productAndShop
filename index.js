@@ -8,7 +8,7 @@ import 'dotenv/config';
 import productRouter from './routes/product.js';
 import shopRouter from './routes/shop.js';
 import stockRouter from './routes/stock.js';
-// Create proxy for test and CORS issues
+// Create proxy 
 const apiProxy = createProxyMiddleware({
   target: String(process.env.PROXY_URL),
   changeOrigin: true,
